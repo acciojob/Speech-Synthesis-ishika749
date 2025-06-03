@@ -84,7 +84,89 @@
   const textArea = document.querySelector('[name="text"]');
   const speakButton = document.querySelector('#speak');
   const stopButton = document.querySelector('#stop');
-
-  function populateVoices() {
+	function populateVoices() {
     voices = speechSynthesis.getVoices();
-    voicesDropdown.innerHTML = '<option v
+    voicesDropdown.innerHTML = '<option value="">Select A Voice</option>';
+
+    if (voices.length === 0) {
+      voicesDropdown.innerHTML = '<option value="">No voices available</option>';
+      speakButton.disabled = true;
+      return;
+    } else {
+      speakButton.disabled = false;
+    }
+
+    voices.forEach((voice, i) => {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' — DEFAULT' : ''}`;
+      voicesDropdown.appendChild(option);
+    });
+  }
+
+  function speak() {
+    if (speechSynthesis.speaking) {
+      // If already speaking, do nothing or restart?
+      speechSynthesis.cancel();
+    }
+
+    if (!textArea.value.trim()) {
+      alert('Please enter text to speak.');
+      return;
+    }
+
+    msg.text = textArea.value;
+    msg.rate = rate.value;
+    msg.pitch = pitch.value;
+
+    if (voicesDropdown.value) {
+      msg.voice = voices[voicesDropdown.value];
+    } else {
+      msg.voice = null;
+    }
+
+    speechSynthesis.speak(msg);
+  }
+
+  // Stop speaking
+  function stop() {
+    if (speechSynthesis.speaking) {
+      speechSynthesis.cancel();
+    }
+  }
+
+  // When user changes voice mid-speech, restart speech with new voice
+  voicesDropdown.addEventListener('change', () => {
+    if (speechSynthesis.speaking) {
+      stop();
+      speak();
+    }
+  });
+
+  // Update rate and pitch dynamically during speaking
+  rate.addEventListener('input', () => {
+    if (speechSynthesis.speaking) {
+      stop();
+      speak();
+    }
+  });
+
+  pitch.addEventListener('input', () => {
+    if (speechSynthesis.speaking) {
+      stop();
+      speak();
+    }
+  });
+
+  speakButton.addEventListener('click', speak);
+  stopButton.addEventListener('click', stop);
+
+  // Populate voices when they are loaded
+  speechSynthesis.addEventListener('voiceschanged', populateVoices);
+
+  // Also populate immediately in case voices are already available
+  populateVoices();
+</script>
+
+</body>
+</html>
